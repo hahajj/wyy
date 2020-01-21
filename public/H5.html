@@ -1,0 +1,327 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title></title>
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/>
+    <script src="./js/jquery-3.4.1.min.js"></script>
+    <link href="css/mui.css" rel="stylesheet"/>
+    <link href="css/mui.picker.css" rel="stylesheet"/>
+    <link href="css/mui.poppicker.css" rel="stylesheet"/>
+    <link href="css/mui.dtpicker.css" rel="stylesheet"/>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="shortcut icon" href="./favicon.png">
+
+</head>
+<style type="text/css">
+    .mui-badge_my {
+        padding: 0px;
+        width: 12%;
+        float: right;
+        line-height: 42px;
+        font-size: 14px;
+    }
+
+    .my_select a:after {
+        font-size: 19px;
+        margin-top: 2px;
+        margin-right: -6px;
+    }
+
+    mui-content .mui-bar > span {
+        border-right: 1px solid #aed8ee;
+    }
+
+    .mui-bar > span > img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .row {
+        margin-right: 0px;
+        margin-left: 0px
+    }
+    #midea{
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        margin: auto;
+        bottom: 0;
+    }
+
+</style>
+
+<body style="background-color: #efeff4;">
+<header class="mui-bar mui-bar-nav" style="    padding-top: 3px;">
+			<span class="mui-input-group" style="width: 50%;">
+				<span class="mui-input-row   my_select">
+					<label style="width: 25%;padding-right: 0;font-size: 15px;">视频预览</label>
+
+					<span class="mui-badge_my" style="width: 35%;margin-left: 10px;">
+						<select class="mui-h5" id="selectid" name="selectid"
+                                style="margin:auto; color:#000;font-size: 14px;color: #999999;text-align: center;"
+                                placeholder='请选择通道'>
+
+						</select>
+					</span>
+					<span class="mui-badge_my" style="width: 35%;">
+						<select class="mui-h5" id="selectsn"
+                                style="margin:auto; color:#000;font-size: 14px;color: #999999;text-align: center;">
+							<option value="">请选择设备</option>
+						</select>
+					</span>
+
+				</span>
+			</span>
+
+</header>
+<div class="mui-content" style="overflow-x: hidden">
+
+    <div id="midea" >
+   </div>
+    <!--style="    padding: 25% 10%;"-->
+
+    <div class="row" style="position: absolute;bottom: 50px;overflow-x: hidden;padding: 0 10px;    width: 100%;">
+        <div class="col-xs-4">
+            <input readonly class="form-control" type="text" id="date-group1-1" placeholder="开始时间">
+        </div>
+        <div class="col-xs-4">
+            <span style="position: absolute;top: 9px;left: -14px;">——</span>
+            <input readonly class="form-control" type="text" id="date-group1-2" placeholder="结束时间">
+        </div>
+        <div class="col-xs-4" style="line-height: 40px;text-align:center ;">
+                <span style="color:#fff;background-color: #3386ff;padding: 10px 20px;border-radius: 5px;"
+                      onclick="doPlay()">播放</span>
+        </div>
+    </div>
+
+    <nav class="mui-bar mui-bar-tab">
+				<span class="mui-tab-item" style="cursor: pointer;" id="stop">
+					<img src="./image/stop.png">
+				</span>
+        <span class="mui-tab-item" style="cursor: pointer;background: #3386ff;display: none" id="play">
+					<img src="./image/play.png">
+				</span>
+        <span class="mui-tab-item capturePicture" id="capturePicture">
+					<img src="./image/shexiangji.png">
+				</span>
+
+    </nav>
+</div>
+<script src="js/mui.js"></script>
+<script src="js/mui.picker.js"></script>
+<script src="js/mui.poppicker.js"></script>
+<script src="js/mui.dtpicker.js"></script>
+<script src="video_JS/polyfill.min.js"></script>
+<script src="video_JS/all.js"></script>
+<script src="video_JS/v4-shims.js"></script>
+<script src="video_JS/ezuikit.js"></script>
+<script type="text/javascript" src="rolldate.min.js"></script>
+<script src="https://g.alicdn.com/dingding/dingtalk-jsapi/2.7.13/dingtalk.open.js"></script>
+
+<script type="text/javascript">
+    mui.init()
+    // var httpUrl = 'http://192.168.18.162:8011/api/api/'
+    var httpUrl = 'http://47.105.207.119:8000/api/api/'
+    var session = localStorage.getItem('accessToken') ||
+        'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIzIiwiaWF0IjoxNTc4NTQxNDU2LCJleHAiOjE1NzkxNDYyNTZ9.IiaGJuivQeg9E5F2PSY-3N6L5rLogwRlFPJ1Q357UX31X5cdEmkYEnbxoi-b0DuXDctV16gB6nM1jSTfIijZOg'
+    var url = ''//视频地址
+    var decoder = '' //视频对象
+    var flag = true//只需要加载一次点击事件
+    var pcFlag=false//是否是web端
+    window.onload = function () {
+        if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)) {//判断浏览器
+            pcFlag=true
+        } else {
+            pcFlag=false
+        }
+        if(!dd.env.platform=="notInDingTalk"){//是否是钉钉  钉钉要加以下代码
+            $("#midea").append(' <div class="parent-wnd" style="overflow:hidden;width:100%; height:100%; position: relative;"><div style="float:left; background-color: #4C4B4B; position: relative; width: 289.2px; height: 289.2px;"><canvas id="canvas0" class="play-window" style="border: 1px solid rgb(255, 204, 0);" wid="0" width="287.2" height="287.2"></canvas><canvas id="canvas_draw0" class="draw-window" style="position: absolute; top: 0px; left: 0px; cursor: default;" wid="0" width="289.2" height="289.2"></canvas></div></div>' )
+        }
+        new Rolldate({
+            el: '#date-group1-1',
+            format: 'YYYY-MM-DD hh:mm',
+            beginYear: 2000,
+            endYear: 2100
+        })
+        new Rolldate({
+            el: '#date-group1-2',
+            format: 'YYYY-MM-DD hh:mm',
+            beginYear: 2000,
+            endYear: 2100
+        })
+        mui.ajax(httpUrl + 'devices', {
+            dataType: 'json', //服务器返回json格式数据
+            type: 'get', //HTTP请求类型
+            timeout: 10000, //超时时间设置为10秒；
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': 'Bearer ' + session
+            },
+            success: function (data) {
+                var html = ''
+                data.content.forEach(function (item) {
+                    html += "<option value=" + item.sn + ">" + item.sn + "</option>"
+                })
+                $("#selectsn").append(html)
+            },
+            error: function (xhr, type, errorThrown) {
+                //异常处理；
+                mui.alert(type)
+            }
+        });
+        $(function () {
+            flashVideo()
+        })
+    }
+
+
+    function flashVideo() {//刷新播放插件
+        $("body").css("height",document.documentElement.clientHeight)
+        if (document.documentElement.clientWidth < document.documentElement.clientHeight) {
+            var width = document.documentElement.clientWidth * 0.8
+        } else {
+            var width = document.documentElement.clientHeight * 0.6
+        }
+        $("#midea").css({"height":width+'px',"width":width+'px'})
+        if (decoder) {//开则先关
+            decoder.stop()
+        }
+        $('#stop').show()
+        $('#play').hide()
+        decoder = new EZUIKit.EZUIPlayer({
+            id: 'midea', // div id值
+            url: url, // ezopen播放地址逗号分隔
+            autoplay: true, // 禁止自动播放
+            decoderPath: './video_JS',
+            width: width, // 默认宽度
+            height: width,
+            splitBasis: 1,// 置窗口切割参数,
+            poster: "./favicon.png",
+        })
+        if (flag) {
+            flag = false
+            setTimeout(function () { // 必须定时器 否则不刷新！！
+                $('#stop').click(function () {//停止
+                    decoder.stop()
+                    $('#stop').hide()
+                    $('#play').show()
+                })
+                $('#play').click(function () {//重新加载
+                    flashVideo()
+
+                })
+                $('#capturePicture').click(function () {//截图
+                    if(pcFlag){
+                        mui.alert("抱歉，移动端不支持截图")
+                    }
+                    decoder.capturePicture(0, 'default');
+                })
+            }, 300)
+        }
+
+    }
+
+
+    function changeDevice(v) {//切换设备 获取新通道
+        mui.ajax(httpUrl + 'devices/' + v + '/cameras', {
+            dataType: 'json', //服务器返回json格式数据
+            type: 'get', //HTTP请求类型
+            timeout: 10000, //超时时间设置为10秒；
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': 'Bearer ' + session
+            },
+            success: function (data) {
+                var html = '	<option value="">请选择通道</option>'
+                data.forEach(function (item) {
+                    html += "<option value=" + item.id.cameraId + ">" + item.name + "</option>"
+                })
+                $("#selectid").empty().append(html)
+            },
+            error: function (xhr, type, errorThrown) {
+                //异常处理；
+                mui.alert(type)
+            }
+        });
+    }
+
+    function doPlay() {//查询播放
+        if (!$("#selectsn").val() || !$("#selectid").val() || !$(
+            "#date-group1-1").val() || !$("#date-group1-2").val()) {
+            mui.alert("设备，通道，时间必填!")
+            return false
+        }
+        var seachData = 'sn=' + $("#selectsn").val() + '&cameraId=' + $("#selectid").val() + '&startTime=' + parseTime($(
+            "#date-group1-1").val()) + '&endTime=' + parseTime($("#date-group1-2").val())
+        mui.ajax(httpUrl + 'devices/rec?' + seachData, {
+            dataType: 'json', //服务器返回json格式数据
+            type: 'get', //HTTP请求类型
+            timeout: 10000, //超时时间设置为10秒；
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': 'Bearer ' + session
+            },
+            success: function (data) {
+                url = data.playUrl
+                flashVideo()
+            },
+            error: function (xhr, type, errorThrown) {
+                //异常处理；
+                mui.alert(type)
+            }
+        });
+    }
+
+    $('#selectsn').on('change', function () {
+        changeDevice(this.value)
+    });
+    $('#selectid').on('change', function () {
+        // flashVideo()
+    });
+
+    function parseTime(date) {//时间戳
+        date = date.substring(0, 19);
+        date = date.replace(/-/g, '/');
+        return new Date(date).getTime();
+    }
+
+    new Rolldate({//日期插件
+        el: '#date-group2-1',
+        format: 'YYYY-MM-DD hh:mm',
+        beginYear: 2000,
+        endYear: 2100,
+        init: function () {
+            console.log('插件开始触发');
+        },
+        moveEnd: function (scroll) {
+            console.log(scroll)
+            console.log('滚动结束');
+        },
+        confirm: function (date) {
+            console.log(date)
+            console.log('确定按钮触发');
+        },
+        cancel: function () {
+            console.log('插件运行取消');
+        }
+    })
+    new Rolldate({
+        el: '#date-group2-2',
+        format: 'YYYY-MM-DD hh:mm',
+        beginYear: 2000,
+        endYear: 2100,
+        init: function () {
+            if (1 == 1) {
+                console.log('阻止插件继续执行');
+                return false;
+            }
+        }
+    })
+</script>
+</body>
+
+</html>
